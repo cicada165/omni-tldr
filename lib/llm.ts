@@ -10,7 +10,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const MODEL = process.env.OPENAI_MODEL ?? "gpt-4o";
+const MODEL = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
 
 function buildPrompt(messages: DiscordMessage[], date: string): string {
   // Format messages for the LLM
