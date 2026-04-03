@@ -1,20 +1,33 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Database layer — Upstash Redis (formerly Vercel KV)
-// Vercel now routes KV through Upstash; this uses the @upstash/redis SDK.
-// Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in your env.
+// Database layer — Upstash Redis
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { Redis } from "@upstash/redis";
 import { DailySummary, SummaryEntry } from "./types";
 
-const redis = Redis.fromEnv(); // reads UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN
+// Create redis client lazily to avoid connection errors if env vars are missing during build
+let redisInstance: Redis | null = null;
+
+function getRedis() {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    console.warn("Upstash Redis environment variables are missing.");
+    return null;
+  }
+  if (!redisInstance) {
+    redisInstance = Redis.fromEnv();
+  }
+  return redisInstance;
+}
 
 const SUMMARY_KEY_PREFIX = "summary:";
-const INDEX_KEY = "summaries:index"; // sorted set: score=timestamp, member=date
+const INDEX_KEY = "summaries:index";
 const MAX_HISTORY = 90;
 
 /** Save a daily summary to Redis */
 export async function saveSummary(summary: DailySummary): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+
   const key = `${SUMMARY_KEY_PREFIX}${summary.id}`;
   await redis.set(key, JSON.stringify(summary));
 
@@ -25,51 +38,72 @@ export async function saveSummary(summary: DailySummary): Promise<void> {
   const total = await redis.zcard(INDEX_KEY);
   if (total > MAX_HISTORY) {
     const toRemove = total - MAX_HISTORY;
-    const oldest = (await redis.zrange(INDEX_KEY, 0, toRemove - 1)) as string[];
-    for (const id of oldest) {
-      await redis.del(`${SUMMARY_KEY_PREFIX}${id}`);
-    }
     await redis.zremrangebyrank(INDEX_KEY, 0, toRemove - 1);
   }
 }
 
 /** Get a specific daily summary by date (YYYY-MM-DD) */
 export async function getSummary(date: string): Promise<DailySummary | null> {
-  const raw = await redis.get<string>(`${SUMMARY_KEY_PREFIX}${date}`);
-  if (!raw) return null;
+  const redis = getRedis();
+  if (!redis) return null;
+
   try {
-    return typeof raw === "string" ? JSON.parse(raw) : raw;
-  } catch {
+    const data = await redis.get<any>(`${SUMMARY_KEY_PREFIX}${date}`);
+    if (!data) return null;
+    
+    // Upstash SDK might return string or object depending on how it was set
+    if (typeof data === "string") {
+      return JSON.parse(data);
+    }
+    return data as DailySummary;
+  } catch (err) {
+    console.error(`Error getting summary for ${date}:`, err);
     return null;
   }
 }
 
 /** Get the most recent daily summary */
 export async function getLatestSummary(): Promise<DailySummary | null> {
-  const ids = (await redis.zrange(INDEX_KEY, -1, -1)) as string[];
-  if (!ids || ids.length === 0) return null;
-  return getSummary(ids[0]);
+  const redis = getRedis();
+  if (!redis) return null;
+
+  try {
+    const ids = (await redis.zrange(INDEX_KEY, -1, -1)) as string[];
+    if (!ids || ids.length === 0) return null;
+    return getSummary(ids[0]);
+  } catch (err) {
+    console.error("Error getting latest summary:", err);
+    return null;
+  }
 }
 
 /** Get a list of all available summaries (lightweight index) */
 export async function listSummaries(limit: number = 30): Promise<SummaryEntry[]> {
-  const ids = (await redis.zrange(INDEX_KEY, -(limit), -1, { rev: true })) as string[];
-  if (!ids || ids.length === 0) return [];
+  const redis = getRedis();
+  if (!redis) return [];
 
-  const entries: SummaryEntry[] = [];
-  for (const id of ids) {
-    const summary = await getSummary(id);
-    if (summary) {
-      entries.push({
-        date: summary.id,
-        id: summary.id,
-        snippet: summary.fullSummary.slice(0, 200) + "...",
-        signalCount: summary.signals.length,
-        watchlistCount: summary.watchlist.length,
-      });
+  try {
+    const ids = (await redis.zrange(INDEX_KEY, -(limit), -1, { rev: true })) as string[];
+    if (!ids || ids.length === 0) return [];
+
+    const entries: SummaryEntry[] = [];
+    for (const id of ids) {
+      const summary = await getSummary(id);
+      if (summary) {
+        entries.push({
+          date: summary.id,
+          id: summary.id,
+          snippet: summary.fullSummary.slice(0, 200) + "...",
+          signalCount: summary.signals.length,
+          watchlistCount: summary.watchlist.length,
+        });
+      }
     }
+    return entries;
+  } catch (err) {
+    console.error("Error listing summaries:", err);
+    return [];
   }
-  return entries;
 }
 
 /** Check if a summary already exists for today */

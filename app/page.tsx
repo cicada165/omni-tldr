@@ -2,26 +2,7 @@
 // Main Dashboard — Today's investment summary
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { DailySummary } from "@/lib/types";
-
-async function getSummaryData(): Promise<DailySummary | null> {
-  try {
-    // In production, fetch from our own API
-    const baseUrl =
-      process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000";
-
-    const res = await fetch(`${baseUrl}/api/summaries?latest=true`, {
-      next: { revalidate: 300 }, // Revalidate every 5 minutes
-    });
-
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
-}
+import { getLatestSummary } from "@/lib/db";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -41,7 +22,7 @@ function formatTime(iso: string): string {
 }
 
 export default async function DashboardPage() {
-  const summary = await getSummaryData();
+  const summary = await getLatestSummary();
 
   if (!summary) {
     return (

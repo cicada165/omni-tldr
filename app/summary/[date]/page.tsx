@@ -4,27 +4,10 @@
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { DailySummary } from "@/lib/types";
+import { getSummary } from "@/lib/db";
 
 interface Props {
   params: Promise<{ date: string }>;
-}
-
-async function getSummary(date: string): Promise<DailySummary | null> {
-  try {
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
-
-    const res = await fetch(`${baseUrl}/api/summaries?date=${date}`, {
-      next: { revalidate: 86400 }, // cache for 24h (historical summaries don't change)
-    });
-
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

@@ -3,30 +3,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { Metadata } from "next";
-import { SummaryEntry } from "@/lib/types";
+import { listSummaries } from "@/lib/db";
 
 export const metadata: Metadata = {
   title: "History | omni-tldr",
   description: "Browse past investment intelligence summaries.",
 };
-
-async function getHistory(): Promise<SummaryEntry[]> {
-  try {
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
-
-    const res = await fetch(`${baseUrl}/api/summaries?list=true&limit=30`, {
-      next: { revalidate: 300 },
-    });
-
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.summaries ?? [];
-  } catch {
-    return [];
-  }
-}
 
 function formatDisplayDate(dateStr: string): string {
   return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
@@ -38,7 +20,7 @@ function formatDisplayDate(dateStr: string): string {
 }
 
 export default async function HistoryPage() {
-  const entries = await getHistory();
+  const entries = await listSummaries(30);
 
   return (
     <div>
