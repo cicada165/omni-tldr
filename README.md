@@ -1,4 +1,4 @@
-# omni-discord ⌬
+# omni-tldr ⌬
 
 > AI-powered daily investment intelligence from Discord communities.
 
@@ -22,7 +22,7 @@ A Next.js application that reads Discord channels via the official bot API, gene
 ### 1. Create a Discord Bot
 
 1. Go to [discord.com/developers/applications](https://discord.com/developers/applications)
-2. Click **New Application** → name it `omni-discord`
+2. Click **New Application** → name it `omni-tldr`
 3. Go to **Bot** tab → click **Add Bot**
 4. Under **Privileged Gateway Intents**, enable:
    - ✅ **Message Content Intent**

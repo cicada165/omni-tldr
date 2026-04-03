@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared TypeScript types for omni-discord
+// Shared TypeScript types for omni-tldr
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface DiscordMessage {

@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
     }
     return NextResponse.json(summary);
   } catch (err) {
-    console.error("[omni-discord] Summaries API error:", err);
+    console.error("[omni-tldr] Summaries API error:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

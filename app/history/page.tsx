@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 import { SummaryEntry } from "@/lib/types";
 
 export const metadata: Metadata = {
-  title: "History | omni-discord",
+  title: "History | omni-tldr",
   description: "Browse past investment intelligence summaries.",
 };
 

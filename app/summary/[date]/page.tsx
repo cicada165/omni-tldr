@@ -30,7 +30,7 @@ async function getSummary(date: string): Promise<DailySummary | null> {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { date } = await params;
   return {
-    title: `${date} | omni-discord`,
+    title: `${date} | omni-tldr`,
     description: `Investment intelligence summary for ${date}.`,
   };
 }

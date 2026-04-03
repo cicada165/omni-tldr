@@ -39,27 +39,27 @@ export async function GET(req: NextRequest) {
   const today = new Date().toISOString().split("T")[0];
 
   try {
-    console.log(`[omni-discord] Starting daily summary for ${today}`);
+    console.log(`[omni-tldr] Starting daily summary for ${today}`);
 
     // ── Step 1: Fetch Discord messages ────────────────────────────────────────
     const { messages, channelNames } = await fetchAllConfiguredMessages();
     console.log(
-      `[omni-discord] Fetched ${messages.length} messages from ${channelNames.length} channels`
+      `[omni-tldr] Fetched ${messages.length} messages from ${channelNames.length} channels`
     );
 
     if (messages.length === 0) {
-      console.warn("[omni-discord] No messages found — saving empty summary");
+      console.warn("[omni-tldr] No messages found — saving empty summary");
     }
 
     // ── Step 2: Generate LLM summary ──────────────────────────────────────────
     const summary = await generateDailySummary(messages, channelNames, today);
     console.log(
-      `[omni-discord] Summary generated: ${summary.signals.length} signals, ${summary.watchlist.length} watchlist items`
+      `[omni-tldr] Summary generated: ${summary.signals.length} signals, ${summary.watchlist.length} watchlist items`
     );
 
     // ── Step 3: Save to database ───────────────────────────────────────────────
     await saveSummary(summary);
-    console.log(`[omni-discord] Summary saved for ${today}`);
+    console.log(`[omni-tldr] Summary saved for ${today}`);
 
     return NextResponse.json({
       status: "success",
@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
       watchlistCount: summary.watchlist.length,
     });
   } catch (err) {
-    console.error("[omni-discord] Cron error:", err);
+    console.error("[omni-tldr] Cron error:", err);
     return NextResponse.json(
       {
         status: "error",

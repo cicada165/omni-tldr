@@ -6,7 +6,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Channels | omni-discord",
+  title: "Channels | omni-tldr",
   description: "Discord channels being monitored for investment signals.",
 };
 

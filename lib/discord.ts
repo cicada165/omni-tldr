@@ -18,7 +18,7 @@ function headers() {
   return {
     Authorization: `Bot ${BOT_TOKEN}`,
     "Content-Type": "application/json",
-    "User-Agent": "omni-discord/1.0 (+https://github.com/qu4ntum/omni-discord)",
+    "User-Agent": "omni-tldr/1.0 (+https://github.com/qu4ntum/omni-tldr)",
   };
 }
 
